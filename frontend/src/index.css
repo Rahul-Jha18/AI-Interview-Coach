@@ -16,6 +16,21 @@
               var(--bg);
 }
 
+/* APP LAYOUT (footer at bottom) */
+html, body, #root {
+  height: 100%;
+}
+
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content {
+  flex: 1;
+}
+
 *{ box-sizing:border-box; }
 body{ margin:0; }
 a{ color:inherit; text-decoration:none; }
@@ -218,5 +233,40 @@ textarea{ resize: vertical; min-height: 130px; }
 
   .nav-actions.mobile .btn {
     width: 100%;
+  }
+}
+/* FOOTER */
+.footer {
+  margin-top: 40px;
+  padding: 24px 18px;
+  border-top: 1px solid rgba(36, 48, 95, 0.7);
+  background: rgba(11, 16, 32, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+.footer-inner {
+  max-width: 1040px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.footer-left h4 {
+  margin-bottom: 6px;
+}
+
+.footer-right {
+  text-align: right;
+}
+
+@media (max-width: 720px) {
+  .footer-inner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .footer-right {
+    text-align: center;
   }
 }
