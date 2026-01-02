@@ -1,5 +1,3 @@
-const BASE = "http://localhost:3001";
-
 async function postJSON(url, body) {
   const res = await fetch(url, {
     method: "POST",
@@ -7,22 +5,19 @@ async function postJSON(url, body) {
     body: JSON.stringify(body),
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || "Request failed");
-  }
+  if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export const generateQuestions = (settings) =>
-  postJSON(`${BASE}/api/interview/generate`, {
+  postJSON(`/api/interview?action=generate`, {
     fieldLabel: settings.fieldLabel,
     level: settings.level,
     count: settings.count,
   });
 
 export const evaluateAnswer = ({ settings, question, answer }) =>
-  postJSON(`${BASE}/api/interview/evaluate`, {
+  postJSON(`/api/interview?action=evaluate`, {
     fieldLabel: settings.fieldLabel,
     level: settings.level,
     question,

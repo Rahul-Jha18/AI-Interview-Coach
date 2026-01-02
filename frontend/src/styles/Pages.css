@@ -1,0 +1,136 @@
+/* =========================
+   HOME PAGE
+========================= */
+.home-hero{
+  padding-top: 10px;
+}
+
+.hero{
+  display: grid;
+  grid-template-columns: 1.2fr .8fr;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* subtle background image effect (no external image needed) */
+.hero::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  background:
+    radial-gradient(900px 520px at 15% 0%, rgba(79,124,255,.28), transparent 60%),
+    radial-gradient(700px 420px at 85% 20%, rgba(255,92,122,.18), transparent 58%),
+    radial-gradient(700px 600px at 50% 120%, rgba(34,197,94,.10), transparent 60%);
+  opacity: .9;
+  pointer-events:none;
+}
+
+.hero-left, .hero-right{
+  position: relative;
+  z-index: 2;
+}
+
+.hero-badge{
+  display:inline-flex;
+  align-items:center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  font-weight: 800;
+  letter-spacing:.2px;
+  margin-bottom: 12px;
+}
+
+.hero-badge .dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--primary), rgba(34,197,94,.9));
+  box-shadow: 0 0 0 4px rgba(79,124,255,.15);
+}
+
+.hero-title{
+  margin: 0 0 10px;
+  font-size: clamp(26px, 3.2vw, 40px);
+  line-height: 1.15;
+}
+
+.hero-sub{
+  max-width: 52ch;
+}
+
+.hero-actions{
+  margin-top: 12px;
+}
+
+.hero-meta{
+  margin-top: 12px;
+  display:flex;
+  flex-wrap:wrap;
+  gap: 10px;
+}
+
+.stat-grid{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.stat-title{
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.stat-desc{
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.nice-list{
+  margin: 0;
+  padding-left: 18px;
+  color: rgba(232,236,255,.85);
+}
+.nice-list li{
+  margin: 10px 0;
+  line-height: 1.5;
+}
+
+.faq-item{
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  border-radius: 14px;
+  padding: 12px;
+  margin-top: 10px;
+}
+.faq-item summary{
+  cursor: pointer;
+  font-weight: 800;
+  color: rgba(232,236,255,.92);
+}
+.faq-item p{
+  margin-top: 10px;
+}
+
+.cta{
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 900px){
+  .hero{
+    grid-template-columns: 1fr;
+  }
+  .cta{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .cta .btn{
+    width: 100%;
+  }
+}
