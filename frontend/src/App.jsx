@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import Home from "./pages/Home.jsx";
 import SelectField from "./pages/SelectField.jsx";
 import Interview from "./pages/Interview.jsx";
 import Result from "./pages/Result.jsx";
@@ -12,7 +13,8 @@ export default function App() {
 
       <main className="app-content">
         <Routes>
-          <Route path="/" element={<SelectField />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/select" element={<SelectField />} />
           <Route path="/interview" element={<Interview />} />
           <Route path="/result" element={<Result />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -23,3 +25,4 @@ export default function App() {
     </div>
   );
 }
+  
