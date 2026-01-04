@@ -69,6 +69,9 @@ export default function Home() {
 
   return (
     <div className="page">
+      <div className="intro">
+        <h1></h1>
+      </div>
       <div className="container">
         <motion.div
           className="hero card hero2"
@@ -87,10 +90,10 @@ export default function Home() {
               Practice{" "}
               <Typewriter
                 texts={[
-                  "Frontend Interviews.",
-                  "Backend Interviews.",
+                  "Job Interviews.",
+                  "Internship Interviews.",
                   "Network & SysAdmin Interviews.",
-                  "QA & Testing Interviews.",
+                  "Bank and Company Interviews.",
                   "Data / Analytics Interviews.",
                 ]}
                 speed={34}
