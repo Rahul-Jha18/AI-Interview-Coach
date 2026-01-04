@@ -1,12 +1,13 @@
 export default function ScoreBadge({ score }) {
+  const s = Number(score ?? 0);
   const label =
-    score >= 85 ? "Excellent" :
-    score >= 70 ? "Good" :
-    score >= 50 ? "Average" : "Needs Work";
+    s >= 85 ? "Excellent" :
+    s >= 70 ? "Good" :
+    s >= 50 ? "Average" : "Needs Work";
 
   return (
     <span className="pill">
-      <b>{score}/100</b> • {label}
+      <b>{s}/100</b> • {label}
     </span>
   );
 }

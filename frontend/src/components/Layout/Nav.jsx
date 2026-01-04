@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Play, RotateCcw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { loadSession, clearSession } from "../../utils/storage.js";
 
 export default function Nav() {
@@ -8,7 +9,6 @@ export default function Nav() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  // Optional: hide navbar on auth pages
   const hideNav = ["/login", "/register"].includes(location.pathname);
   if (hideNav) return null;
 
@@ -26,7 +26,6 @@ export default function Nav() {
   );
 
   const isActive = (path) => location.pathname === path;
-
   const close = () => setOpen(false);
 
   const startNew = () => {
@@ -43,14 +42,12 @@ export default function Nav() {
   return (
     <header className="nav-header">
       <nav className="nav-bar">
-        {/* Brand */}
         <div className="nav-left">
           <Link to="/" className="logo" onClick={close}>
             AI Interview Coach
           </Link>
         </div>
 
-        {/* Mobile Toggle */}
         <button
           className="nav-toggle"
           onClick={() => setOpen((s) => !s)}
@@ -60,7 +57,6 @@ export default function Nav() {
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>
 
-        {/* Desktop Links */}
         <ul className="nav-links desktop">
           {links.map((l) => (
             <li key={l.to}>
@@ -71,7 +67,6 @@ export default function Nav() {
           ))}
         </ul>
 
-        {/* Desktop Actions */}
         <div className="nav-actions desktop">
           {canResume && (
             <button className="btn btn-ghost" onClick={resume} title="Resume interview">
@@ -86,36 +81,45 @@ export default function Nav() {
           </button>
         </div>
 
-        {/* Mobile Panel */}
-        <div className={`mobile-panel ${open ? "open" : ""}`}>
-          <ul className="nav-links mobile">
-            {links.map((l) => (
-              <li key={l.to}>
-                <Link
-                  className={isActive(l.to) ? "active" : ""}
-                  to={l.to}
-                  onClick={close}
-                >
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              className="mobile-panel open"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+            >
+              <ul className="nav-links mobile">
+                {links.map((l) => (
+                  <li key={l.to}>
+                    <Link
+                      className={isActive(l.to) ? "active" : ""}
+                      to={l.to}
+                      onClick={close}
+                    >
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
 
-          <div className="nav-actions mobile">
-            {canResume && (
-              <button className="btn btn-ghost" onClick={resume}>
-                <Play size={18} style={{ marginRight: 8 }} />
-                Resume
-              </button>
-            )}
+              <div className="nav-actions mobile">
+                {canResume && (
+                  <button className="btn btn-ghost" onClick={resume}>
+                    <Play size={18} style={{ marginRight: 8 }} />
+                    Resume
+                  </button>
+                )}
 
-            <button className="btn btn-primary" onClick={startNew}>
-              <RotateCcw size={18} style={{ marginRight: 8 }} />
-              Start New
-            </button>
-          </div>
-        </div>
+                <button className="btn btn-primary" onClick={startNew}>
+                  <RotateCcw size={18} style={{ marginRight: 8 }} />
+                  Start New
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
     </header>
   );

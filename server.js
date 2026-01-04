@@ -95,7 +95,7 @@ Return ONLY JSON:
       const n = clampInt(count, 10, 30);
 
 
-      const prompt = `
+      const prompt = `  
 You are an interview coach.
 
 Create ${n} interview questions for:

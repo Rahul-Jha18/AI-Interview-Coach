@@ -1,25 +1,29 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+
 import fields from "../data/fields.js";
 import { getSettings, loadSession, clearSession, saveSettings } from "../utils/storage.js";
-import '../styles/Pages.css';
+import "../styles/Pages.css";
+
+import Typewriter from "../components/Typewriter.jsx";
 
 const FAQ = [
   {
     q: "How does this interview coach work?",
-    a: "You choose a track and level. The system generates questions, evaluates your answers, and provides feedback + an expected answer so you can improve."
+    a: "Choose a track and level. The app generates questions, evaluates your answers, and gives feedback + an expected answer."
   },
   {
     q: "Is my data saved?",
-    a: "Your session is saved locally in your browser (localStorage). Nothing is stored on the server unless you add a database later."
+    a: "Your session is saved locally in your browser (localStorage). Nothing is stored on the server."
   },
   {
     q: "How do I get better scores?",
-    a: "Write structured answers, mention key points, and use STAR for behavioral questions: Situation, Task, Action, Result."
+    a: "Use structured answers and mention key points. For behavioral questions, use STAR: Situation, Task, Action, Result."
   },
   {
     q: "Can I resume later?",
-    a: "Yes. If you close the browser, you can resume the last session from Home using the Resume button."
+    a: "Yes. You can resume the last session anytime using Resume."
   }
 ];
 
@@ -37,7 +41,6 @@ export default function Home() {
   }, [settings]);
 
   const quickStart = () => {
-    // Default settings if none selected yet
     const defaultField = fields?.[0]?.key || "frontend";
     const defaultLabel = fields?.[0]?.label || "Frontend Developer";
 
@@ -47,12 +50,13 @@ export default function Home() {
       fieldLabel: settings?.fieldLabel || defaultLabel,
       level: settings?.level || "junior",
       count: settings?.count || 8,
+      profileText: settings?.profileText || "",
     });
 
     navigate("/interview");
   };
 
-  const goSelect = () => navigate("/select"); // optional route (if you want)
+  const goSelect = () => navigate("/select");
   const goInterview = () => navigate("/interview");
   const goResult = () => navigate("/result");
 
@@ -61,24 +65,42 @@ export default function Home() {
     navigate("/", { replace: true });
   };
 
+  const resume = () => navigate("/interview");
+
   return (
-    <div className="home-hero">
+    <div className="page">
       <div className="container">
-        {/* HERO */}
-        <div className="hero card">
+        <motion.div
+          className="hero card hero2"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+        >
           <div className="hero-left">
             <div className="hero-badge">
               <span className="dot" />
               AI Interview Coach
+              <span className="badge-chip">Modern</span>
             </div>
 
             <h1 className="hero-title">
-              Practice interviews like a real mock session.
+              Practice{" "}
+              <Typewriter
+                texts={[
+                  "Frontend Interviews.",
+                  "Backend Interviews.",
+                  "Network & SysAdmin Interviews.",
+                  "QA & Testing Interviews.",
+                  "Data / Analytics Interviews.",
+                ]}
+                speed={34}
+                pause={1050}
+              />
             </h1>
 
             <p className="hero-sub">
               Generate questions, write answers, get instant feedback and a strong expected answer.
-              Improve fast with structured learning.
+              Improve fast with a mock-session feel.
             </p>
 
             <div className="row wrap hero-actions">
@@ -86,12 +108,22 @@ export default function Home() {
                 Start Interview
               </button>
 
-              <button className="btn" onClick={() => navigate("/")}>
-                Home
-              </button>
-
               <button className="btn" onClick={goSelect}>
                 Choose Track
+              </button>
+
+              {canResume ? (
+                <button className="btn btn-glow" onClick={resume}>
+                  Resume ({answered} answered)
+                </button>
+              ) : (
+                <button className="btn" onClick={goInterview} disabled={!settings?.field}>
+                  Go to Interview
+                </button>
+              )}
+
+              <button className="btn btn-ghost" onClick={goResult} disabled={!canResume}>
+                View Result
               </button>
             </div>
 
@@ -100,15 +132,24 @@ export default function Home() {
                 Track: <b>{fieldLabel}</b>
               </div>
               <div className="pill">
-                Session:{" "}
-                <b>{canResume ? `Available (${answered} answered)` : "Not started"}</b>
+                Level: <b>{settings?.level || "junior"}</b>
+              </div>
+              <div className="pill">
+                Session: <b>{canResume ? "Available" : "Not started"}</b>
               </div>
             </div>
+
+            {canResume && (
+              <div className="row wrap" style={{ marginTop: 12 }}>
+                <button className="btn btn-danger" onClick={resetAll}>
+                  Reset Session
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* RIGHT PANEL */}
           <div className="hero-right">
-            <div className="stat-grid">
+            <div className="stat-grid stat-grid-2">
               <div className="stat card soft">
                 <div className="stat-title">Instant Feedback</div>
                 <div className="stat-desc">Score + suggestions + key points</div>
@@ -116,12 +157,12 @@ export default function Home() {
 
               <div className="stat card soft">
                 <div className="stat-title">Expected Answer</div>
-                <div className="stat-desc">See what a strong answer looks like</div>
+                <div className="stat-desc">See what “strong” looks like</div>
               </div>
 
               <div className="stat card soft">
                 <div className="stat-title">Resume Anytime</div>
-                <div className="stat-desc">Local session stored in your browser</div>
+                <div className="stat-desc">Saved locally in your browser</div>
               </div>
 
               <div className="stat card soft">
@@ -130,38 +171,42 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="row wrap" style={{ marginTop: 12 }}>
-              <button className="btn" onClick={goInterview} disabled={!settings}>
-                Go to Interview
-              </button>
-
-              <button className="btn" onClick={goResult} disabled={!canResume}>
-                View Result
-              </button>
-
-              <button className="btn btn-danger" onClick={resetAll} disabled={!canResume}>
-                Reset Session
-              </button>
+            <div className="mini card soft" style={{ marginTop: 12 }}>
+              <div className="mini-title">Pro Tip</div>
+              <div className="mini-desc">
+                Use <b>STAR</b> (Situation, Task, Action, Result) for behavioral questions.
+              </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         <div className="spacer-lg" />
 
-        {/* GUIDELINES */}
         <div className="grid grid-2">
-          <div className="card">
+          <motion.div
+            className="card"
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{ duration: 0.3 }}
+          >
             <h2>Guidelines</h2>
             <ul className="nice-list">
-              <li><b>Write structured answers</b> (STAR for behavioral questions).</li>
+              <li><b>Write structured answers</b> (STAR for behavioral).</li>
               <li><b>Be specific</b>: tools, methods, metrics, outcomes.</li>
-              <li><b>Say trade-offs</b>: performance vs cost vs security.</li>
+              <li><b>Mention trade-offs</b>: performance vs cost vs security.</li>
               <li><b>Think aloud</b> for scenario questions.</li>
-              <li><b>After evaluation</b>, compare with the Expected Answer.</li>
+              <li><b>Compare</b> after evaluation with Expected Answer.</li>
             </ul>
-          </div>
+          </motion.div>
 
-          <div className="card">
+          <motion.div
+            className="card"
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.25 }}
+            transition={{ duration: 0.3, delay: 0.05 }}
+          >
             <h2>FAQ</h2>
             <div className="faq">
               {FAQ.map((f, i) => (
@@ -171,13 +216,18 @@ export default function Home() {
                 </details>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
 
         <div className="spacer-lg" />
 
-        {/* CTA */}
-        <div className="card cta">
+        <motion.div
+          className="card cta cta2"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.25 }}
+          transition={{ duration: 0.32 }}
+        >
           <div>
             <h2>Ready to start?</h2>
             <p className="muted">
@@ -192,11 +242,11 @@ export default function Home() {
             <button className="btn" onClick={goSelect}>
               Select Track
             </button>
-            <button className="btn" onClick={goResult} disabled={!canResume}>
+            <button className="btn btn-ghost" onClick={goResult} disabled={!canResume}>
               View Result
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
