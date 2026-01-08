@@ -1,7 +1,8 @@
-<img width="1240" height="647" alt="image" src="https://github.com/user-attachments/assets/e617d0a1-aaff-47ba-a6c9-8c738c47de98" />
-<img width="1271" height="635" alt="image" src="https://github.com/user-attachments/assets/7fb5ea82-a503-4fad-9de0-c376c7c6a193" />
-<img width="1197" height="647" alt="image" src="https://github.com/user-attachments/assets/c8f31ba5-fcc1-4e40-8485-13b545b70c5e" />
-<img width="957" height="468" alt="image" src="https://github.com/user-attachments/assets/87731652-f7da-4064-a796-e49d92f6d13d" />
+<img width="1348" height="650" alt="image" src="https://github.com/user-attachments/assets/2a1c3f1e-170c-479a-8373-eea8b3e8731b" />
+<img width="1300" height="653" alt="image" src="https://github.com/user-attachments/assets/c462e043-7ae2-49a5-a5cf-c875eaaa9a29" />
+<img width="1233" height="648" alt="image" src="https://github.com/user-attachments/assets/3d22a8a9-7c49-445b-a09c-aa885f03d695" />
+<img width="1285" height="652" alt="image" src="https://github.com/user-attachments/assets/c2f56c5d-576f-44c4-8eed-0f172fbdba50" />
+
 .
 
 🎯 AI Interview Coach
@@ -106,4 +107,5 @@ Production-style architecture
 Perfect for showcasing AI-powered applications, frontend UX, and backend API design in a single project.
 
 📌 Future Enhancements
+
 
