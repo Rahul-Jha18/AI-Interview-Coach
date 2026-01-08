@@ -1,16 +1,13 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, Play, RotateCcw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { loadSession, clearSession } from "../../utils/storage.js";
+import '../../styles/Pages.css'
 
 export default function Nav() {
-  const location = useLocation();
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
-
-  const hideNav = ["/login", "/register"].includes(location.pathname);
-  if (hideNav) return null;
 
   const session = loadSession();
   const canResume = !!session?.questions?.length;
@@ -25,8 +22,12 @@ export default function Nav() {
     []
   );
 
-  const isActive = (path) => location.pathname === path;
   const close = () => setOpen(false);
+
+  const go = (path) => {
+    close();
+    navigate(path);
+  };
 
   const startNew = () => {
     clearSession();
@@ -39,81 +40,87 @@ export default function Nav() {
     navigate("/interview");
   };
 
+  // close on route change
+  useEffect(() => {
+    close();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
+  // close on ESC + outside click
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") close();
+    };
+    const onClick = (e) => {
+      // click outside drawer closes it
+      const drawer = document.querySelector(".nav-drawer");
+      const toggle = document.querySelector(".nav-toggle");
+      if (!open) return;
+      if (drawer && drawer.contains(e.target)) return;
+      if (toggle && toggle.contains(e.target)) return;
+      close();
+    };
+
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("mousedown", onClick);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("mousedown", onClick);
+    };
+  }, [open]);
+
   return (
     <header className="nav-header">
       <nav className="nav-bar">
-        <div className="nav-left">
-          <Link to="/" className="logo" onClick={close}>
-            AI Interview Coach
-          </Link>
-        </div>
+        {/* LOGO */}
+        <Link to="/" className="logo" onClick={close}>
+          <span className="logo-mark" />
+          <span className="logo-text">AI Interview Coach</span>
+        </Link>
 
+        {/* MENU BUTTON (ALWAYS VISIBLE) */}
         <button
           className="nav-toggle"
           onClick={() => setOpen((s) => !s)}
-          aria-label="Toggle menu"
+          aria-label="Menu"
           aria-expanded={open}
         >
-          {open ? <X size={20} /> : <Menu size={20} />}
+          <span className="nav-toggle-fallback">{open ? "✕" : "☰"}</span>
         </button>
 
-        <ul className="nav-links desktop">
-          {links.map((l) => (
-            <li key={l.to}>
-              <Link className={isActive(l.to) ? "active" : ""} to={l.to} onClick={close}>
-                {l.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
-        <div className="nav-actions desktop">
-          {canResume && (
-            <button className="btn btn-ghost" onClick={resume} title="Resume interview">
-              <Play size={18} style={{ marginRight: 8 }} />
-              Resume
-            </button>
-          )}
-
-          <button className="btn btn-primary" onClick={startNew} title="Start new interview">
-            <RotateCcw size={18} style={{ marginRight: 8 }} />
-            Start New
-          </button>
-        </div>
-
+        {/* DRAWER */}
         <AnimatePresence>
           {open && (
             <motion.div
-              className="mobile-panel open"
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
+              className="nav-drawer"
+              initial={{ opacity: 0, y: -8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.98 }}
               transition={{ duration: 0.18 }}
             >
-              <ul className="nav-links mobile">
+              <ul className="nav-drawer-links">
                 {links.map((l) => (
                   <li key={l.to}>
-                    <Link
-                      className={isActive(l.to) ? "active" : ""}
-                      to={l.to}
-                      onClick={close}
+                    <button
+                      className="nav-item"
+                      onClick={() => go(l.to)}
+                      aria-current={location.pathname === l.to ? "page" : undefined}
                     >
                       {l.label}
-                    </Link>
+                    </button>
                   </li>
                 ))}
               </ul>
 
-              <div className="nav-actions mobile">
+              <div className="nav-divider" />
+
+              <div className="nav-drawer-actions">
                 {canResume && (
                   <button className="btn btn-ghost" onClick={resume}>
-                    <Play size={18} style={{ marginRight: 8 }} />
-                    Resume
+                    Resume Interview
                   </button>
                 )}
-
                 <button className="btn btn-primary" onClick={startNew}>
-                  <RotateCcw size={18} style={{ marginRight: 8 }} />
                   Start New
                 </button>
               </div>

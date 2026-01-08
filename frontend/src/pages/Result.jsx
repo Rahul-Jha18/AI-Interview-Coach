@@ -40,7 +40,9 @@ export default function Result() {
             <h2>No session found.</h2>
             <p className="muted">Start an interview to see results here.</p>
             <div className="row wrap">
-              <button className="btn btn-primary" onClick={goHome}>Go Home</button>
+              <button className="btn btn-primary" onClick={goHome}>
+                Go Home
+              </button>
             </div>
           </div>
         </div>
@@ -54,60 +56,96 @@ export default function Result() {
   return (
     <div className="page">
       <div className="container">
-        <motion.div
-          className="card"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25 }}
-        >
-          <div className="row wrap between">
-            <div>
-              <h2 style={{ marginBottom: 6 }}>Results</h2>
-              <p className="muted">{settings.fieldLabel} • {settings.level}</p>
+        <div className="grid grid-2">
+          <motion.div
+            className="card"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22 }}
+          >
+            <div className="row wrap between">
+              <div>
+                <h2 style={{ marginBottom: 6 }}>Results</h2>
+                <p className="muted" style={{ marginTop: 0 }}>
+                  {settings.fieldLabel} • {settings.level}
+                </p>
+              </div>
+
+              <div className="row wrap gap-sm">
+                <button className="btn" onClick={resume}>
+                  Resume
+                </button>
+                <button className="btn btn-primary" onClick={restart}>
+                  Start New
+                </button>
+              </div>
             </div>
 
-            <div className="row wrap gap-sm">
-              <button className="btn" onClick={resume}>Resume</button>
-              <button className="btn btn-primary" onClick={restart}>Start New</button>
-            </div>
-          </div>
+            <div className="divider" />
 
-          <div className="divider" />
-
-          <div className="grid grid-3">
-            <div className="card soft">
-              <div className="stat-title">Overall</div>
-              <div className="big-score">{avg}<span className="muted">/100</span></div>
-              <div className="chip">{scoreLabel}</div>
-            </div>
-
-            <div className="card soft">
-              <div className="stat-title">Answered</div>
-              <div className="big-score">{answered}<span className="muted">/{total}</span></div>
-              <p className="muted" style={{ marginTop: 6 }}>Questions evaluated</p>
-            </div>
-
-            <div className="card soft">
-              <div className="stat-title">Best Score</div>
-              <div className="big-score">{best}<span className="muted">/100</span></div>
-              <p className="muted" style={{ marginTop: 6 }}>Top single answer</p>
-            </div>
-          </div>
-
-          <div className="spacer" />
-
-          <h3>Per-question recap</h3>
-          <ol className="recap">
-            {(session?.questions || []).map((q, i) => (
-              <li key={i} className="recap-item">
-                <div className="recap-q">{q}</div>
-                <div className="recap-s">
-                  Score: <b>{session?.scores?.[i]?.score ?? "—"}</b> / 100
+            <div className="grid grid-3">
+              <div className="card soft">
+                <div className="stat-title">Overall</div>
+                <div className="big-score">
+                  {avg}
+                  <span className="muted">/100</span>
                 </div>
-              </li>
-            ))}
-          </ol>
-        </motion.div>
+                <div className="chip">{scoreLabel}</div>
+              </div>
+
+              <div className="card soft">
+                <div className="stat-title">Answered</div>
+                <div className="big-score">
+                  {answered}
+                  <span className="muted">/{total}</span>
+                </div>
+                <p className="muted" style={{ marginTop: 6 }}>
+                  Questions evaluated
+                </p>
+              </div>
+
+              <div className="card soft">
+                <div className="stat-title">Best Score</div>
+                <div className="big-score">
+                  {best}
+                  <span className="muted">/100</span>
+                </div>
+                <p className="muted" style={{ marginTop: 6 }}>
+                  Top single answer
+                </p>
+              </div>
+            </div>
+
+            <div className="spacer" />
+
+            <h3>Per-question recap</h3>
+            <ol className="recap">
+              {(session?.questions || []).map((q, i) => (
+                <li key={i} className="recap-item">
+                  <div className="recap-q">{q}</div>
+                  <div className="recap-s">
+                    Score: <b>{session?.scores?.[i]?.score ?? "—"}</b> / 100
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </motion.div>
+
+          <motion.div
+            className="card soft hero-image"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22, delay: 0.03 }}
+          >
+            <img className="hero-img" src="/result.jpg" alt="Results" />
+            <div className="hero-image-overlay">
+              <div style={{ fontWeight: 1000 }}>Improve score step-by-step</div>
+              <div className="muted" style={{ marginTop: 4 }}>
+                Focus weak answers • repeat mock sessions
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </div>
   );

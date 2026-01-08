@@ -44,55 +44,77 @@ export default function SelectField() {
   return (
     <div className="page">
       <div className="container">
-        <motion.div
-          className="card"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25 }}
-        >
-          <div className="row wrap between">
-            <div>
-              <h1 style={{ marginBottom: 6 }}>Describe Your Background</h1>
-              <p className="muted">
-                Any field. Any role. AI will prepare your interview questions.
-              </p>
+        <div className="grid grid-2">
+          <motion.div
+            className="card"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22 }}
+          >
+            <div className="row wrap between">
+              <div>
+                <h1 style={{ marginBottom: 6 }}>Describe Your Background</h1>
+                <p className="muted" style={{ marginTop: 0 }}>
+                  AI will understand your interest and prepare the best interview track.
+                </p>
+              </div>
+
+              <button className="btn btn-ghost" onClick={() => navigate("/")}>
+                Back Home
+              </button>
             </div>
 
-            <button className="btn btn-ghost" onClick={() => navigate("/")}>
-              Back Home
-            </button>
-          </div>
+            <div className="divider" />
 
-          <div className="divider" />
+            <label>Your profile / interest</label>
+            <textarea
+              className="input"
+              rows={7}
+              value={profile}
+              onChange={(e) => setProfile(e.target.value)}
+              placeholder="Example: MBA finance graduate with interest in banking + risk management"
+            />
 
-          <label>Your profile / interest</label>
-          <textarea
-            className="input"
-            rows={6}
-            value={profile}
-            onChange={(e) => setProfile(e.target.value)}
-            placeholder="Example: MBA finance graduate with interest in banking"
-          />
+            <div className="spacer" />
 
-          <div className="spacer" />
+            <div className="row wrap">
+              <button className="btn btn-primary" onClick={analyze} disabled={loading}>
+                {loading ? "Analyzing..." : "Analyze Profile"}
+              </button>
 
-          <div className="row wrap">
-            <button className="btn btn-primary" onClick={analyze} disabled={loading}>
-              {loading ? "Analyzing..." : "Analyze Profile"}
-            </button>
+              <button
+                className="btn"
+                onClick={() => {
+                  setProfile("");
+                  setAi(null);
+                }}
+                disabled={loading && !ai}
+              >
+                Clear
+              </button>
+            </div>
 
-            <button
-              className="btn"
-              onClick={() => {
-                setProfile("");
-                setAi(null);
-              }}
-              disabled={loading && !ai}
-            >
-              Clear
-            </button>
-          </div>
-        </motion.div>
+            <p className="muted" style={{ marginTop: 12 }}>
+              Tip: mention your role, tools, and what type of job you want.
+            </p>
+          </motion.div>
+
+          {/* Image card */}
+          <motion.div
+            className="card soft hero-image"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22, delay: 0.03 }}
+          >
+            <img className="hero-img" src="/select.jpg" alt="Select track" />
+            <div className="hero-image-overlay">
+              <div style={{ fontWeight: 1000 }}>Tell your background clearly</div>
+              <div className="muted" style={{ marginTop: 4 }}>
+                AI picks domain + role + level automatically
+              </div>
+            </div>
+          </motion.div>
+        </div>
 
         <AnimatePresence>
           {ai && (
@@ -102,7 +124,7 @@ export default function SelectField() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 8 }}
-              transition={{ duration: 0.22 }}
+              transition={{ duration: 0.2 }}
             >
               <div className="row wrap between">
                 <h3 style={{ margin: 0 }}>AI Understanding</h3>

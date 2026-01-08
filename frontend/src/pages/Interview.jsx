@@ -8,16 +8,20 @@ import ScoreBadge from "../components/ScoreBadge.jsx";
 import { generateQuestions, evaluateAnswer } from "../services/interviewApi.js";
 import { getSettings, loadSession, saveSession } from "../utils/storage.js";
 
+const withTimeout = (promise, ms = 15000) =>
+  Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Request timed out")), ms)
+    ),
+  ]);
+
 export default function Interview() {
   const navigate = useNavigate();
   const settings = getSettings();
 
-  const startedRef = useRef(false);
+  const [initialized, setInitialized] = useState(false);
   const saveDraftTimer = useRef(null);
-
-  useEffect(() => {
-    if (!settings?.field) navigate("/", { replace: true });
-  }, [settings, navigate]);
 
   const [loading, setLoading] = useState(true);
   const [questions, setQuestions] = useState([]);
@@ -29,8 +33,14 @@ export default function Interview() {
 
   const [autoAdvance, setAutoAdvance] = useState(false);
   const [showExpected, setShowExpected] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Restore session
+  /* Redirect if no settings */
+  useEffect(() => {
+    if (!settings?.field) navigate("/", { replace: true });
+  }, [settings, navigate]);
+
+  /* Restore session */
   useEffect(() => {
     const session = loadSession();
     if (session?.questions?.length) {
@@ -43,19 +53,19 @@ export default function Interview() {
     setLoading(false);
   }, []);
 
-  // Load questions if no session
+  /* Generate questions (strict-mode safe) */
   useEffect(() => {
+    if (!settings?.field || initialized) return;
+    setInitialized(true);
+
+    const session = loadSession();
+    if (session?.questions?.length) return;
+
     const run = async () => {
-      if (!settings?.field) return;
-      if (startedRef.current) return;
-      startedRef.current = true;
-
-      const session = loadSession();
-      if (session?.questions?.length) return;
-
       setLoading(true);
+      setError(null);
       try {
-        const res = await generateQuestions(settings);
+        const res = await withTimeout(generateQuestions(settings));
         const qs = res?.questions || [];
 
         setQuestions(qs);
@@ -73,29 +83,36 @@ export default function Interview() {
         });
       } catch (e) {
         console.error(e);
-        alert("Failed to generate questions. Check API config.");
+        setError("Failed to generate questions. Please try again.");
       } finally {
         setLoading(false);
       }
     };
 
     run();
-  }, [settings]);
+  }, [settings, initialized]);
 
   const current = questions[index];
 
-  const { progress, doneCount, total } = useMemo(() => {
-    const done = (scores || []).filter(Boolean).length;
+  /* Progress (safe score handling) */
+  const { progress, doneCount, total, avgScore, bestScore } = useMemo(() => {
+    const validScores = (scores || []).filter((s) => s && typeof s.score === "number");
+    const done = validScores.length;
     const total = questions.length || settings?.count || 0;
-    const p = total ? Math.round((done / total) * 100) : 0;
-    return { progress: p, doneCount: done, total };
+    const progress = total ? Math.round((done / total) * 100) : 0;
+
+    const avgScore =
+      done === 0 ? 0 : Math.round(validScores.reduce((a, b) => a + (b.score || 0), 0) / done);
+    const bestScore = validScores.reduce((m, x) => Math.max(m, x?.score || 0), 0);
+
+    return { progress, doneCount: done, total, avgScore, bestScore };
   }, [scores, questions.length, settings]);
 
   const isEvaluated = !!feedback;
   const canEvaluate = !!answer.trim() && !loading;
   const canNext = !!answer.trim() && !loading;
 
-  const persist = (patch) => {
+  const persist = (patch = {}) => {
     saveSession({
       questions,
       index,
@@ -136,44 +153,45 @@ export default function Interview() {
   };
 
   const onEvaluate = async () => {
-    if (!answer.trim()) return alert("Write your answer first.");
-    if (!current) return;
+    if (!answer.trim() || !current) return;
 
     setLoading(true);
+    setError(null);
+
     try {
-      const res = await evaluateAnswer({
-        settings,
-        question: current,
-        answer,
-      });
+      const res = await withTimeout(
+        evaluateAnswer({
+          settings,
+          question: current,
+          answer,
+        })
+      );
 
-      const newScores = [...scores];
-      newScores[index] = res;
+      const updated = [...scores];
+      updated[index] = res;
 
-      setScores(newScores);
+      setScores(updated);
       setFeedback(res);
 
       saveSession({
         questions,
         index,
-        scores: newScores,
+        scores: updated,
         answerDraft: answer,
         feedback: res,
       });
 
-      if (autoAdvance) setTimeout(() => next(newScores), 650);
+      if (autoAdvance) setTimeout(() => next(updated), 650);
     } catch (e) {
       console.error(e);
-      alert("Failed to evaluate answer.");
+      setError(e.message || "Failed to evaluate answer.");
     } finally {
       setLoading(false);
     }
   };
 
   const onNextSmart = async () => {
-    if (!answer.trim()) return alert("Write your answer first.");
-    if (!current) return;
-
+    if (!answer.trim()) return;
     if (!feedback) {
       await onEvaluate();
       return;
@@ -184,8 +202,34 @@ export default function Interview() {
   const copyText = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-    } catch {
-      // ignore
+    } catch {}
+  };
+
+  const restartSession = async () => {
+    // regenerate a fresh set of questions without leaving the page
+    if (!settings?.field) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await withTimeout(generateQuestions(settings));
+      const qs = res?.questions || [];
+      setQuestions(qs);
+      setIndex(0);
+      setScores([]);
+      setAnswer("");
+      setFeedback(null);
+      saveSession({
+        questions: qs,
+        index: 0,
+        scores: [],
+        answerDraft: "",
+        feedback: null,
+      });
+    } catch (e) {
+      console.error(e);
+      setError("Failed to restart. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -226,27 +270,44 @@ export default function Interview() {
               />
               <span>Show expected</span>
             </label>
+
+            <button className="btn btn-ghost" onClick={() => navigate("/select")}>
+              Change Track
+            </button>
           </div>
         </motion.div>
 
         <div className="spacer" />
 
-        <ProgressBar value={progress} meta={`${doneCount}/${total} evaluated`} />
+        <ProgressBar value={progress} meta={`${doneCount}/${total} evaluated • Avg ${avgScore}/100`} />
+
+        {error && (
+          <div className="card" style={{ borderColor: "rgba(255,92,122,.55)" }}>
+            <div className="row between wrap">
+              <p className="muted" style={{ margin: 0 }}>{error}</p>
+              <button className="btn btn-ghost" onClick={restartSession} disabled={loading}>
+                Try Again
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="spacer" />
 
+        {/* Loading */}
         {loading && (
           <div className="card">
             <p className="muted">Loading…</p>
             <div className="skeleton" style={{ height: 18, width: "85%" }} />
             <div className="skeleton" style={{ height: 18, width: "65%", marginTop: 10 }} />
-            <div className="skeleton" style={{ height: 120, width: "100%", marginTop: 16 }} />
+            <div className="skeleton" style={{ height: 160, width: "100%", marginTop: 16 }} />
           </div>
         )}
 
+        {/* Main */}
         {!loading && current && (
-          <div className="grid modern-grid">
-            {/* SINGLE MAIN CARD */}
+          <div className="interview-shell">
+            {/* LEFT: question + answer */}
             <motion.div
               key={index}
               className="card"
@@ -275,7 +336,7 @@ export default function Interview() {
 
               <textarea
                 className="input"
-                rows={8}
+                rows={9}
                 value={answer}
                 onChange={(e) => {
                   const v = e.target.value;
@@ -292,9 +353,142 @@ export default function Interview() {
               <p className="muted" style={{ marginTop: 10 }}>
                 Structure suggestion: <b>Situation → Task → Action → Result</b>
               </p>
+
+              <div className="row wrap gap-sm" style={{ marginTop: 10 }}>
+                <button className="btn btn-ghost" onClick={() => copyText(current)} title="Copy question">
+                  Copy Question
+                </button>
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => copyText(answer)}
+                  disabled={!answer.trim()}
+                  title="Copy your answer"
+                >
+                  Copy Answer
+                </button>
+              </div>
             </motion.div>
 
-            {/* Sticky action bar */}
+            {/* RIGHT: side panel */}
+            <div className="interview-side">
+              <div className="card soft interview-side-top">
+                <div className="side-image">
+                  {/* Put an image in: /public/interview-hero.jpg */}
+                  <img
+                    className="side-img"
+                    src="/interview-hero.jpg"
+                    alt="Interview practice"
+                    onError={(e) => {
+                      // if image missing, hide it gracefully
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                  <div className="side-overlay">
+                    <div className="side-title">Stay Calm, Answer Smart</div>
+                    <div className="side-sub">Small structure beats long text.</div>
+                  </div>
+                </div>
+
+                <div className="side-stats">
+                  <div className="side-stat">
+                    <div className="muted">Progress</div>
+                    <div className="side-big">{progress}%</div>
+                  </div>
+                  <div className="side-stat">
+                    <div className="muted">Avg Score</div>
+                    <div className="side-big">{avgScore}</div>
+                  </div>
+                  <div className="side-stat">
+                    <div className="muted">Best</div>
+                    <div className="side-big">{bestScore}</div>
+                  </div>
+                </div>
+
+                <div className="divider" />
+
+                <div className="side-section">
+                  <div className="side-h">Quick Tips</div>
+                  <ul className="nice-list" style={{ marginTop: 8 }}>
+                    <li><b>Start with context</b> (1–2 lines).</li>
+                    <li><b>Name tools</b> you used (e.g., Linux, AD, React).</li>
+                    <li><b>Show impact</b> (time saved, uptime, speed).</li>
+                    <li><b>Mention trade-offs</b> (security vs usability).</li>
+                    <li><b>End with result</b> and what you learned.</li>
+                  </ul>
+                </div>
+
+                <div className="divider" />
+
+                <div className="side-actions">
+                  <button className="btn" onClick={restartSession} disabled={loading}>
+                    Regenerate Questions
+                  </button>
+                  <button className="btn btn-ghost" onClick={() => navigate("/result")}>
+                    Go to Result
+                  </button>
+                </div>
+              </div>
+
+              {/* Feedback card on right (desktop) */}
+              <AnimatePresence>
+                {feedback && (
+                  <motion.div
+                    className="card"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="row wrap between">
+                      <div className="row wrap gap-sm">
+                        <h3 style={{ margin: 0 }}>AI Feedback</h3>
+                        {feedback?.score != null && <span className="chip">Score: {feedback.score}</span>}
+                      </div>
+
+                      <button className="btn btn-ghost" onClick={() => setShowExpected((s) => !s)}>
+                        {showExpected ? "Hide Expected" : "Show Expected"}
+                      </button>
+                    </div>
+
+                    <div className="spacer-sm" />
+                    <p style={{ whiteSpace: "pre-line" }}>{feedback.feedback}</p>
+
+                    {Array.isArray(feedback.keyPoints) && feedback.keyPoints.length > 0 && (
+                      <>
+                        <div className="spacer-sm" />
+                        <h4>Key points to mention</h4>
+                        <ul className="nice-list">
+                          {feedback.keyPoints.map((k, i) => (
+                            <li key={i}>{k}</li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
+
+                    {showExpected && feedback.expectedAnswer && (
+                      <>
+                        <div className="divider" />
+                        <h4>Expected Answer</h4>
+                        <div className="expected">
+                          <pre className="expectedText">{feedback.expectedAnswer}</pre>
+                        </div>
+
+                        <div className="row wrap gap-sm" style={{ marginTop: 10 }}>
+                          <button
+                            className="btn btn-ghost"
+                            onClick={() => copyText(feedback.expectedAnswer)}
+                          >
+                            Copy Expected
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Sticky action bar (bottom) */}
             <div className="actionbar">
               <div className="row wrap gap-sm">
                 <button className="btn" onClick={onEvaluate} disabled={!canEvaluate}>
@@ -309,84 +503,14 @@ export default function Interview() {
               </div>
 
               <div className="row wrap gap-sm">
-                <button
-                  className="btn btn-ghost"
-                  onClick={() => copyText(current)}
-                  disabled={!current}
-                  title="Copy question"
-                >
-                  Copy Q
+                <button className="btn btn-ghost" onClick={() => navigate("/")} title="Home">
+                  Home
                 </button>
-
-                <button
-                  className="btn btn-ghost"
-                  onClick={() => copyText(answer)}
-                  disabled={!answer.trim()}
-                  title="Copy your answer"
-                >
-                  Copy A
+                <button className="btn btn-ghost" onClick={() => navigate("/result")} title="Result">
+                  Result
                 </button>
               </div>
             </div>
-
-            {/* Feedback */}
-            <AnimatePresence>
-              {feedback && (
-                <motion.div
-                  className="card"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="row wrap between">
-                    <div className="row wrap gap-sm">
-                      <h3 style={{ margin: 0 }}>AI Feedback</h3>
-                      {feedback?.score != null && <span className="chip">Score: {feedback.score}</span>}
-                    </div>
-
-                    <button className="btn btn-ghost" onClick={() => setShowExpected((s) => !s)}>
-                      {showExpected ? "Hide Expected" : "Show Expected"}
-                    </button>
-                  </div>
-
-                  <div className="spacer-sm" />
-                  <p style={{ whiteSpace: "pre-line" }}>{feedback.feedback}</p>
-
-                  {Array.isArray(feedback.keyPoints) && feedback.keyPoints.length > 0 && (
-                    <>
-                      <div className="spacer-sm" />
-                      <h4>Key points to mention</h4>
-                      <ul className="nice-list">
-                        {feedback.keyPoints.map((k, i) => (
-                          <li key={i}>{k}</li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-
-                  {showExpected && feedback.expectedAnswer && (
-                    <>
-                      <div className="divider" />
-                      <h4>Expected Answer (AI)</h4>
-                      <p className="muted" style={{ marginTop: 0 }}>
-                        Compare with your answer and improve.
-                      </p>
-
-                      <div className="expected">
-                        <pre className="expectedText">{feedback.expectedAnswer}</pre>
-                      </div>
-
-                      <div className="row wrap gap-sm" style={{ marginTop: 10 }}>
-                        <button className="btn btn-ghost" onClick={() => copyText(feedback.expectedAnswer)}>
-                          Copy Expected
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
         )}
       </div>
