@@ -44,7 +44,7 @@ body::before{
 
   /* Change this path if your image name is different */
   background:
-    linear-gradient(180deg, rgba(7,8,18,.86), rgba(5,6,16,.92)),
+    linear-gradient(180deg, rgba(12, 12, 12, 0), rgba(0, 0, 0, 0.856),rgba(0, 0, 0, 0.767)),
     url("./assets/p2.png");
 
   background-size: cover;

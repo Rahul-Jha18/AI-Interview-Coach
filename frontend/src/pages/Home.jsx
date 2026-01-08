@@ -1,6 +1,8 @@
+
 import { useMemo, useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import Tips from "../assets/tips.png";
 
 import fields from "../data/fields.js";
 import { getSettings, loadSession, clearSession, saveSettings } from "../utils/storage.js";
@@ -8,35 +10,15 @@ import "../styles/Pages.css";
 
 import Typewriter from "../components/Typewriter.jsx";
 
-// Import your existing pages (no new framework)
 import SelectField from "./SelectField.jsx";
 import Interview from "./Interview.jsx";
 import Result from "./Result.jsx";
 
 const FAQ = [
-  {
-    q: "How does this interview coach work?",
-    a: "Choose a track and level. The app generates questions, evaluates your answers, and gives feedback + an expected answer.",
-  },
-  {
-    q: "Is my data saved?",
-    a: "Your session is saved locally in your browser (localStorage). Nothing is stored on the server.",
-  },
-  {
-    q: "How do I get better scores?",
-    a: "Use structured answers and mention key points. For behavioral questions, use STAR: Situation, Task, Action, Result.",
-  },
-  {
-    q: "Can I resume later?",
-    a: "Yes. You can resume the last session anytime using Resume.",
-  },
-];
-
-const FEATURES = [
-  { title: "Instant Feedback", desc: "Score + improvements + key points to mention" },
-  { title: "Expected Answer", desc: "See what a strong answer looks like" },
-  { title: "Resume Anytime", desc: "Session saved locally in your browser" },
-  { title: "Multiple Tracks", desc: "Frontend, Backend, Network, QA, Data, More" },
+  { q: "How does this interview coach work?", a: "Choose a track and level. The app generates questions, evaluates your answers, and gives feedback + an expected answer." },
+  { q: "Is my data saved?", a: "Your session is saved locally in your browser (localStorage). Nothing is stored on the server." },
+  { q: "How do I get better scores?", a: "Use structured answers and mention key points. For behavioral questions, use STAR: Situation, Task, Action, Result." },
+  { q: "Can I resume later?", a: "Yes. You can resume the last session anytime using Resume." },
 ];
 
 const STEPS = [
@@ -53,14 +35,28 @@ export default function Home() {
   const canResume = !!session?.questions?.length;
   const answered = (session?.scores || []).filter(Boolean).length;
 
-  // Single-page sections
-  const [section, setSection] = useState("home"); // home | select | interview | result
+  const [section, setSection] = useState("home");
 
-  // if user refreshes while on interview/result route, still fine
+  // ✅ refs for smooth scroll targets
+  const topRef = useRef(null);
+  const selectRef = useRef(null);
+  const interviewRef = useRef(null);
+  const resultRef = useRef(null);
+
+  const scrollTo = (ref) => {
+    // small delay helps when AnimatePresence mounts content
+    setTimeout(() => {
+      ref?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  };
+
+  // ✅ Auto-scroll whenever section changes
   useEffect(() => {
-    // keep route simple, but do not break your existing routes
-    // If you prefer: navigate("/") always. I kept it safe.
-  }, [navigate]);
+    if (section === "home") scrollTo(topRef);
+    if (section === "select") scrollTo(selectRef);
+    if (section === "interview") scrollTo(interviewRef);
+    if (section === "result") scrollTo(resultRef);
+  }, [section]);
 
   const fieldLabel = useMemo(() => {
     if (settings?.fieldLabel) return settings.fieldLabel;
@@ -80,8 +76,7 @@ export default function Home() {
       profileText: settings?.profileText || "",
     });
     setSection("interview");
-    // optional: keep routes working
-    navigate("/"); // stay on home
+    navigate("/");
   };
 
   const resume = () => {
@@ -110,13 +105,14 @@ export default function Home() {
     navigate("/", { replace: true });
   };
 
-  const tracksPreview = useMemo(() => {
-    return (fields || []).slice(0, 6);
-  }, []);
+  const tracksPreview = useMemo(() => (fields || []).slice(0, 6), []);
 
   return (
     <div className="page">
       <div className="container">
+        {/* Scroll top anchor */}
+        <div ref={topRef} />
+
         <div className="home-tabs card soft">
           <button
             className={`tabbtn ${section === "home" ? "active" : ""}`}
@@ -147,10 +143,7 @@ export default function Home() {
             Result
           </button>
         </div>
-      
-
         <div className="spacer" />
-
         {/* HERO */}
         <motion.div
           className="hero card hero2"
@@ -236,14 +229,12 @@ export default function Home() {
           </div>
 
           <div className="hero-right">
-            {/* normal image (no SVG). Put file in: public/images/hero.png */}
             <div className="hero-image card soft">
               <img
-                src="/images/hero.png"
-                alt="Interview practice"
+                src={Tips}
+                alt="Pro Tip - STAR Method"
                 className="hero-img"
                 onError={(e) => {
-                  // if user didn't add image, hide it gracefully
                   e.currentTarget.style.display = "none";
                 }}
               />
@@ -254,18 +245,11 @@ export default function Home() {
                 </div>
               </div>
             </div>
-
-            <div className="stat-grid stat-grid-2" style={{ marginTop: 12 }}>
-              {FEATURES.map((f, i) => (
-                <div key={i} className="stat card soft">
-                  <div className="stat-title">{f.title}</div>
-                  <div className="stat-desc">{f.desc}</div>
-                </div>
-              ))}
-            </div>
           </div>
         </motion.div>
-        {/* OVERVIEW SECTION */}
+
+        <div className="spacer" />
+
         <AnimatePresence mode="wait">
           {section === "home" && (
             <motion.div
@@ -276,13 +260,7 @@ export default function Home() {
               transition={{ duration: 0.22 }}
             >
               <div className="grid grid-2">
-                <motion.div
-                  className="card"
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.25 }}
-                  transition={{ duration: 0.3 }}
-                >
+                <motion.div className="card" initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.25 }} transition={{ duration: 0.3 }}>
                   <h2>How it works</h2>
                   <div className="steps">
                     {STEPS.map((s) => (
@@ -297,13 +275,7 @@ export default function Home() {
                   </div>
                 </motion.div>
 
-                <motion.div
-                  className="card"
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.25 }}
-                  transition={{ duration: 0.3, delay: 0.05 }}
-                >
+                <motion.div className="card" initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.25 }} transition={{ duration: 0.3, delay: 0.05 }}>
                   <h2>Popular Tracks</h2>
                   <div className="track-grid">
                     {tracksPreview.map((t) => (
@@ -333,41 +305,7 @@ export default function Home() {
 
               <div className="spacer-lg" />
 
-              <div className="grid grid-3">
-                <div className="card soft">
-                  <div className="stat-title">Answer Smarter</div>
-                  <p className="muted">
-                    Use STAR + mention tools, outcomes, metrics, and tradeoffs.
-                  </p>
-                </div>
-                <div className="card soft">
-                  <div className="stat-title">Train Consistency</div>
-                  <p className="muted">
-                    Practice daily for 10 minutes and watch your score rise.
-                  </p>
-                </div>
-                <div className="card soft">
-                  <div className="stat-title">Be Interview-ready</div>
-                  <p className="muted">
-                    See expected answers and compare with your own.
-                  </p>
-                </div>
-              </div>
-
-              <div className="spacer-lg" />
-
-              <div className="grid grid-2">
-                <div className="card">
-                  <h2>Guidelines</h2>
-                  <ul className="nice-list">
-                    <li><b>Write structured answers</b> (STAR for behavioral).</li>
-                    <li><b>Be specific</b>: tools, methods, metrics, outcomes.</li>
-                    <li><b>Mention trade-offs</b>: performance vs cost vs security.</li>
-                    <li><b>Think aloud</b> for scenario questions.</li>
-                    <li><b>Compare</b> after evaluation with Expected Answer.</li>
-                  </ul>
-                </div>
-
+              
                 <div className="card">
                   <h2>FAQ</h2>
                   <div className="faq">
@@ -378,51 +316,29 @@ export default function Home() {
                       </details>
                     ))}
                   </div>
-                </div>
               </div>
             </motion.div>
           )}
 
-          {/* EMBED: SELECT */}
           {section === "select" && (
-            <motion.div
-              key="select"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              transition={{ duration: 0.22 }}
-            >
-              <div className="embed-card">
+            <motion.div key="select" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.22 }}>
+              <div ref={selectRef} className="embed-card">
                 <SelectField />
               </div>
             </motion.div>
           )}
 
-          {/* EMBED: INTERVIEW */}
           {section === "interview" && (
-            <motion.div
-              key="interview"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              transition={{ duration: 0.22 }}
-            >
-              <div className="embed-card">
+            <motion.div key="interview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.22 }}>
+              <div ref={interviewRef} className="embed-card">
                 <Interview />
               </div>
             </motion.div>
           )}
 
-          {/* EMBED: RESULT */}
           {section === "result" && (
-            <motion.div
-              key="result"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              transition={{ duration: 0.22 }}
-            >
-              <div className="embed-card">
+            <motion.div key="result" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} transition={{ duration: 0.22 }}>
+              <div ref={resultRef} className="embed-card">
                 <Result />
               </div>
             </motion.div>
